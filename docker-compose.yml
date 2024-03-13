@@ -20,8 +20,6 @@ services:
 
   app:
     container_name: "todo-app"
-    ports:
-      - "80:80"
     build:
       context: .
       dockerfile: Dockerfile
@@ -86,6 +84,7 @@ services:
     image: redis:7.2.2-alpine3.18
 
   server:
+    container_name: "todo-nginx"
     image: nginx:1.25.3-alpine3.18
     volumes:
       - "./conf.d:/etc/nginx/conf.d"
