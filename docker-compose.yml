@@ -1,0 +1,86 @@
+version: "3.8"
+
+services:
+  bot:
+    container_name: "todo-bot"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m bot
+    environment:
+      BOT_TOKEN: 7136352029:AAEm60bI64UhjKVu2Fwgj8Vir3nb-CEy9nI
+      DATABASE_URL: postgresql+asyncpg://todo:todo@todo:5432/todo
+      FSM_STORAGE_URL: redis://todo:6379/0
+      TASK_BROKER_STORAGE: redis://todo:6379/1
+    volumes:
+      - ".:/app:rw"
+    depends_on:
+      - db
+      - redis
+
+  app:
+    container_name: "todo-app"
+    ports:
+      - "80:80"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m app
+    environment:
+      BOT_TOKEN: 7136352029:AAEm60bI64UhjKVu2Fwgj8Vir3nb-CEy9nI
+      DATABASE_URL: postgresql+asyncpg://todo:todo@todo:5432/todo
+      FSM_STORAGE_URL: redis://todo:6379/0
+      TASK_BROKER_STORAGE: redis://todo:6379/1
+    volumes:
+      - ".:/app:rw"
+    depends_on:
+      - db
+      - redis
+
+  scheduler:
+    container_name: "todo-scheduler"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: taskiq scheduler src.settings:scheduler src.tasks
+    environment:
+      BOT_TOKEN: 7136352029:AAEm60bI64UhjKVu2Fwgj8Vir3nb-CEy9nI
+      DATABASE_URL: postgresql+asyncpg://todo:todo@todo:5432/todo
+      FSM_STORAGE_URL: redis://todo:6379/0
+      TASK_BROKER_STORAGE: redis://todo:6379/1
+    volumes:
+      - ".:/app:rw"
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    container_name: "todo-worker"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: taskiq worker src.settings:broker src.tasks
+    environment:
+      BOT_TOKEN: 7136352029:AAEm60bI64UhjKVu2Fwgj8Vir3nb-CEy9nI
+      DATABASE_URL: postgresql+asyncpg://todo:todo@todo:5432/todo
+      FSM_STORAGE_URL: redis://todo:6379/0
+      TASK_BROKER_STORAGE: redis://todo:6379/1
+    volumes:
+      - ".:/app:rw"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    container_name: "todo-db"
+    hostname: "todo"
+    image: postgres:16-alpine3.19
+    environment:
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: todo
+      POSTGRES_DB: todo
+
+  redis:
+    container_name: "todo-redis"
+    hostname: "todo"
+    image: redis:7.2.2-alpine3.18
