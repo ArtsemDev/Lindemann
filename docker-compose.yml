@@ -84,3 +84,10 @@ services:
     container_name: "todo-redis"
     hostname: "todo"
     image: redis:7.2.2-alpine3.18
+
+  server:
+    image: nginx:1.25.3-alpine3.18
+    volumes:
+      - "./conf.d:/etc/nginx/conf.d"
+    ports:
+      - "80:80"
