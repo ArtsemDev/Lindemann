@@ -88,5 +88,13 @@ services:
     image: nginx:1.25.3-alpine3.18
     volumes:
       - "./conf.d:/etc/nginx/conf.d"
+      - "./certbot/conf:/etc/letsencrypt:ro"
+      - "./certbot/www:/var/www/certbot:ro"
     ports:
       - "80:80"
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - "./certbot/www:/var/www/certbot:rw"
+      - "./certbot/conf:/etc/letsencrypt:rw"
