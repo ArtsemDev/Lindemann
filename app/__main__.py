@@ -69,6 +69,7 @@ async def index(request: Request):
 @app.post(path="/", response_class=ORJSONResponse, response_model=TaskDetail, status_code=201)
 async def create_task(request: Request, form: TaskCreateForm):
     async with async_session_maker() as session:  # type: AsyncSession
+        form.end_date = form.end_date.replace(tzinfo=None)
         task = Task(**form.model_dump() | {"user_id": request.user.id})
         session.add(instance=task)
         try:
