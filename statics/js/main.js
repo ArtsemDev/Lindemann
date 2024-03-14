@@ -12,7 +12,7 @@ function searchUserTasks(q) {
         method: "GET",
         dataType: "json",
         headers: {
-            "Authorization": tg.initDataUnsafe,
+            "Authorization": tg.initData,
         },
         success: function (data) {
             let task_list = document.getElementById("task-list")
