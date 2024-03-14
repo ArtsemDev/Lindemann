@@ -31,7 +31,7 @@ function getUserTasks() {
         method: "GET",
         dataType: "json",
         headers: {
-            "Authorization": tg.initDataUnsafe,
+            "Authorization": tg.initData,
         },
         success: function (data) {
             let task_list = document.getElementById("task-list")
@@ -54,7 +54,7 @@ $("#create-task").on("submit", function (e) {
             dataType: "json",
             method: "POST",
             headers: {
-                "Authorization": tg.initDataUnsafe,
+                "Authorization": tg.initData,
             },
             data: JSON.stringify({
                 title: this.title.value,
