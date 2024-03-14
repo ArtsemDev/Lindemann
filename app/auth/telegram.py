@@ -16,7 +16,7 @@ class TelegramWebappAuthenticationBackend(AuthenticationBackend):
             self, conn: HTTPConnection
     ) -> tuple[AuthCredentials, WebAppUser] | None:
         telegram_init_data = conn.headers.get("Authorization")
-
+        print(telegram_init_data)
         if telegram_init_data is None:
             return
 
