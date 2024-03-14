@@ -13,10 +13,11 @@ from src.settings import broker, async_session_maker, bot
 @broker.task(schedule=[{"cron": "*/15 * * * *"}])
 async def pending_tasks():
     async with async_session_maker() as session:  # type: AsyncSession
+        now = datetime.now().replace(tzinfo=None)
         tasks = await session.scalars(
             statement=select(Task).options(joinedload(Task.user))
             .filter(Task.is_done == False)
-            .filter(Task.end_date.between(datetime.now(), datetime.now() + timedelta(minutes=15)))
+            .filter(Task.end_date.between(now, now + timedelta(minutes=15)))
         )
         tasks = tasks.unique().all()
         for task in tasks:
