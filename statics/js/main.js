@@ -8,9 +8,12 @@ function searchTask() {
 
 function searchUserTasks(q) {
     $.ajax({
-        url: `/tasks/${tg.initDataUnsafe.user.id}?q=${q}`,
+        url: `/tasks?q=${q}`,
         method: "GET",
         dataType: "json",
+        headers: {
+            "Authorization": tg.initDataUnsafe,
+        },
         success: function (data) {
             let task_list = document.getElementById("task-list")
             task_list.innerHTML = ""
@@ -24,9 +27,12 @@ function searchUserTasks(q) {
 
 function getUserTasks() {
     $.ajax({
-        url: `/tasks/${tg.initDataUnsafe.user.id}`,
+        url: `/tasks`,
         method: "GET",
         dataType: "json",
+        headers: {
+            "Authorization": tg.initDataUnsafe,
+        },
         success: function (data) {
             let task_list = document.getElementById("task-list")
             task_list.innerHTML = ""
@@ -47,6 +53,9 @@ $("#create-task").on("submit", function (e) {
             contentType: "application/json",
             dataType: "json",
             method: "POST",
+            headers: {
+                "Authorization": tg.initDataUnsafe,
+            },
             data: JSON.stringify({
                 title: this.title.value,
                 description: this.description.value,

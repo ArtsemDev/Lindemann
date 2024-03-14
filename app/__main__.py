@@ -5,18 +5,21 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Query
 from fastapi import Path as PathParam
 from fastapi.responses import ORJSONResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from orjson import orjson
+from pydantic import BaseModel, Field, field_validator, PositiveInt
 from sqlalchemy import select
-from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.requests import Request
 from starlette.responses import HTMLResponse
-from pydantic import BaseModel, Field, field_validator, PositiveInt
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+from app.auth.telegram import TelegramWebappAuthenticationBackend
 from src.models import Task
-from src.settings import async_session_maker
+from src.settings import async_session_maker, settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templating = Jinja2Templates(directory=BASE_DIR / "templates")
@@ -27,7 +30,6 @@ class TaskCreateForm(BaseModel):
     title: str = Field(default=..., max_length=128)
     description: Optional[str]
     end_date: datetime
-    user_id: PositiveInt
 
     @field_validator("end_date", mode="after")
     def validate_end_date(cls, value: datetime):
@@ -43,7 +45,6 @@ class TaskDetail(BaseModel):
     title: str = Field(default=..., max_length=128)
     description: Optional[str]
     end_date: datetime
-    user_id: PositiveInt
 
 
 app = FastAPI(
@@ -53,6 +54,10 @@ app = FastAPI(
     include_in_schema=False
 )
 app.add_middleware(middleware_class=ProxyHeadersMiddleware, trusted_hosts=("*", ))
+app.add_middleware(
+    middleware_class=AuthenticationMiddleware,
+    backend=TelegramWebappAuthenticationBackend(token=settings.BOT_TOKEN.get_secret_value(), loads=orjson.loads)
+)
 app.mount(path="/statics", app=statics, name="statics")
 
 
@@ -62,9 +67,9 @@ async def index(request: Request):
 
 
 @app.post(path="/", response_class=ORJSONResponse, response_model=TaskDetail, status_code=201)
-async def create_task(form: TaskCreateForm):
+async def create_task(request: Request, form: TaskCreateForm):
     async with async_session_maker() as session:  # type: AsyncSession
-        task = Task(**form.model_dump())
+        task = Task(**form.model_dump() | {"user_id": request.user.id})
         session.add(instance=task)
         try:
             await session.commit()
@@ -75,10 +80,10 @@ async def create_task(form: TaskCreateForm):
             return TaskDetail.model_validate(obj=task, from_attributes=True)
 
 
-@app.get(path="/tasks/{user_id}", response_model=list[TaskDetail], response_class=ORJSONResponse)
-async def user_tasks(user_id: int = PathParam(ge=1), q: str = Query(default=None)):
+@app.get(path="/tasks", response_model=list[TaskDetail], response_class=ORJSONResponse)
+async def user_tasks(request: Request, q: str = Query(default=None)):
     async with async_session_maker() as session:  # type: AsyncSession
-        stmt = select(Task).filter(Task.user_id == user_id)
+        stmt = select(Task).filter(Task.user_id == request.user.id)
         if q:
             stmt = stmt.filter(Task.title.icontains(q.lower()))
         tasks = await session.scalars(
