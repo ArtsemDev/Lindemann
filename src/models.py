@@ -32,7 +32,6 @@ class Task(Base):
         BIGINT,
         ForeignKey("bot_users.id", ondelete="CASCADE", onupdate="CASCADE"),
         nullable=False,
-        default=608287610
     )
 
     user = relationship(argument=User, back_populates="tasks")
