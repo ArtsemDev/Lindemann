@@ -1,7 +1,7 @@
 import json
 from typing import Callable, Any
 
-from aiogram.utils.web_app import WebAppInitData, safe_parse_webapp_init_data
+from aiogram.utils.web_app import safe_parse_webapp_init_data, WebAppUser
 from starlette.authentication import AuthenticationBackend, AuthCredentials, AuthenticationError
 from starlette.requests import HTTPConnection
 
