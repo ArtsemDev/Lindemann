@@ -25,7 +25,7 @@ class Task(Base):
     id = Column(BIGINT, primary_key=True)
     title = Column(VARCHAR(length=128), nullable=False)
     description = Column(TEXT, nullable=True)
-    start_date = Column(TIMESTAMP, default=datetime.now, server_default="now()", nullable=False)
+    start_date = Column(TIMESTAMP, default=lambda: datetime.now().replace(tzinfo=None), server_default="now()", nullable=False)
     end_date = Column(TIMESTAMP, nullable=False)
     is_done = Column(BOOLEAN, default=False, nullable=False, server_default="false")
     user_id = Column(
